@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disposal Options</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        .container { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+        .buyers-list { list-style: none; padding: 0; }
+        .buyers-list li { margin: 10px 0; }
+        #map { height: 400px; width: 100%; margin-top: 20px; }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Disposal Options in {{ location }}</h1>
+        <ul class="buyers-list">
+            {% for buyer in buyers %}
+                <li>{{ buyer }}</li>
+            {% endfor %}
+        </ul>
+        <div id="map"></div>
+    </div>
+    <script>
+        function initMap() {
+            var map = L.map('map').setView([52.52, 13.405], 12); // Default to Berlin
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            var buyerPositions = {{ buyer_positions|tojson }};
+            Object.keys(buyerPositions).forEach(function(buyer) {
+                var position = [buyerPositions[buyer][0], buyerPositions[buyer][1]];
+                L.marker(position).addTo(map)
+                    .bindPopup(buyer)
+                    .openPopup();
+            });
+        }
+        window.onload = initMap;
+    </script>
+</body>
+</html>

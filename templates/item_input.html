@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Input</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+        .scrollable { max-height: 400px; overflow-y: auto; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Describe Your Item</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <label>Description:</label>
+            <input type="text" name="description" required><br><br>
+            
+            <label>Category:</label>
+            <select name="category" id="category" required>
+                <option value="">Select a category</option>
+                <option value="Plastics">Plastics</option>
+            </select><br><br>
+            
+            <label>Subcategory:</label>
+            <select name="subcategory" id="subcategory" required>
+                <option value="">Select a subcategory</option>
+            </select><br><br>
+            
+            <label>Upload a photo:</label>
+            <input type="file" name="photo" accept="image/*"><br><br>
+            
+            <div id="extraFields" class="scrollable" style="display: none;">
+                <label>Is the material dirty?</label>
+                <select name="dirty" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select><br><br>
+                
+                <label>Condition:</label>
+                <select name="condition" required>
+                    <option value="Perfect">Perfect</option>
+                    <option value="Worn">Worn</option>
+                    <option value="Deteriorated">Deteriorated</option>
+                </select><br><br>
+                
+                <button type="submit" id="submitBtn" disabled>Proceed</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const descriptionField = document.getElementById('description');
+        const photoField = document.getElementById('photo');
+        const submitBtn = document.getElementById('submitBtn');    
+        const categoryDropdown = document.getElementById('category');
+        const subcategoryDropdown = document.getElementById('subcategory');
+        const extraFields = document.getElementById('extraFields');
+        
+        const categories = {
+            "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
+            "Plastic Films": ["LDP", "HDP"]
+        };
+
+        categoryDropdown.addEventListener('change', function() {
+            const subcategories = categories[this.value] || [];
+            subcategoryDropdown.innerHTML = '<option value="">Select a subcategory</option>' +
+                subcategories.map(sub => `<option value="${sub}">${sub}</option>`).join('');
+        });
+
+        subcategoryDropdown.addEventListener('change', function() {
+            if (this.value) {
+                extraFields.style.display = 'block';
+            }
+        });
+
+    function checkFormCompletion() {
+        if (descriptionField.value.trim() !== "" || photoField.files.length > 0) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+
+    descriptionField.addEventListener('input', checkFormCompletion);
+    photoField.addEventListener('change', checkFormCompletion);
+    </script>
+</body>
+</html>
