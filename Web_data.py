@@ -50,18 +50,15 @@ item_input_html = """
 <body>
   <div class="container">
     <h1>Describe Your Item</h1>
-    <form method="POST" enctype="multipart/form-data">
-      <label>Description:</label>
-      <input type="text" name="description" id="description" required><br><br>
-      
+    <form method="POST" enctype="multipart/form-data">      
       <label>Category:</label>
-      <select name="category" id="category" required>
+      <select name="category" id="category">
         <option value="">Select a category</option>
         <option value="Plastics">Plastics</option>
       </select><br><br>
       
       <label>Subcategory:</label>
-      <select name="subcategory" id="subcategory" required>
+      <select name="subcategory" id="subcategory">
         <option value="">Select a subcategory</option>
       </select><br><br>
       
@@ -71,14 +68,14 @@ item_input_html = """
       <!-- Extra fields appear only if category and subcategory are selected -->
       <div id="extraFields" class="scrollable" style="display: none;">
         <label>Is the material dirty?</label>
-        <select name="dirty" id="dirty" required>
+        <select name="dirty" id="dirty">
           <option value="">Select</option>
           <option value="Yes">Yes</option>
           <option value="No">No</option>
         </select><br><br>
         
         <label>Condition:</label>
-        <select name="condition" id="condition" required>
+        <select name="condition" id="condition">
           <option value="">Select</option>
           <option value="Perfect">Perfect</option>
           <option value="Worn">Worn</option>
@@ -93,7 +90,6 @@ item_input_html = """
 
   <script>
     // Get references to all fields.
-    const descriptionField = document.getElementById('description');
     const photoField = document.getElementById('photo');
     const submitBtn = document.getElementById('submitBtn');    
     const categoryDropdown = document.getElementById('category');
@@ -124,7 +120,6 @@ item_input_html = """
 
     // Check form completion when any relevant field changes.
     function checkFormCompletion() {
-      const descriptionFilled = descriptionField.value.trim() !== "";
       const photoUploaded = photoField.files.length > 0;
       const categoryAndExtraSelected = 
             categoryDropdown.value !== "" &&
@@ -133,7 +128,7 @@ item_input_html = """
             conditionDropdown.value !== "";
       
       // Enable the button if ANY one criterion is satisfied.
-      if (descriptionFilled || photoUploaded || categoryAndExtraSelected) {
+      if (photoUploaded || categoryAndExtraSelected) {
         submitBtn.disabled = false;
       } else {
         submitBtn.disabled = true;
@@ -141,7 +136,6 @@ item_input_html = """
     }
 
     // Event listeners.
-    descriptionField.addEventListener('input', checkFormCompletion);
     photoField.addEventListener('change', checkFormCompletion);
     dirtyDropdown.addEventListener('change', checkFormCompletion);
     conditionDropdown.addEventListener('change', checkFormCompletion);

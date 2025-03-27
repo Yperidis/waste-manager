@@ -53,7 +53,7 @@ def item_input(name, location):
             'dirty': dirty,
             'photo': photo_filename
         })
-        return redirect(url_for('disposal_options', location=location))
+        return redirect(url_for('dashboard', name=name, location=location))
     
     categories = {
         "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
@@ -83,6 +83,9 @@ with open("templates/index.html", "w") as file:
 # Save item_input.html file
 with open("templates/item_input.html", "w") as file:
     file.write(item_input_html)
+
+with open("templates/dashboard.html", "w") as file:
+    file.write(dashboard_html)
 
 # Save disposal_options.html file
 with open("templates/disposal_options.html", "w") as file:
