@@ -1,6 +1,10 @@
+from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, redirect, url_for
 import random
-from Web_data import index_html, item_input_html, dashboard_html, disposal_options_html
+import requests
+from Web_data import index_html, item_input_html, dashboard_html, disposal_options_html, reduce_waste_html
+from urllib.robotparser import RobotFileParser
+from urllib.parse import urlparse, urljoin
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -73,6 +77,63 @@ def disposal_options(location):
     return render_template('disposal_options.html', location=location, buyers=buyers, buyer_positions=buyer_positions)
 
 
+@app.route('/reduce_waste')
+def reduce_waste():
+    # Scrape information from an external site that has content on reducing waste.
+    results = scrape_reduce_waste()
+    return render_template('reduce_waste.html', results=results)
+
+def is_allowed(url, user_agent='*'):
+    parsed_url = urlparse(url)
+    base_url = f'{parsed_url.scheme}://{parsed_url.netloc}'
+    robots_url = urljoin(base_url, 'robots.txt')
+
+    rp = RobotFileParser()
+    rp.set_url(robots_url)
+    rp.read()
+    return rp.can_fetch(user_agent, url)
+
+def scrape_reduce_waste():
+    """
+    This function uses requests and BeautifulSoup to perform a respectful crawl.
+    Ensure the target site allows crawling (check its robots.txt) and adjust the URL and parsing logic accordingly.
+    """
+    # Replace with a valid URL that allows crawling.
+    url = "https://onetreeplanted.org"
+    headers = {
+        'User-Agent': '*'}
+
+    if is_allowed(url, 'YourBotName'):
+        response = requests.get(url)
+
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print("Error fetching data:", e)
+            return []
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        results = []
+        
+        # The following parsing logic assumes that each article is contained in an <article> tag.
+        # Adjust selectors as required by the structure of your target page.
+        articles = soup.find_all('article')
+        for article in articles:
+            title_tag = article.find('h2')
+            summary_tag = article.find('p')
+            link_tag = article.find('a')
+            if title_tag and summary_tag and link_tag:
+                title = title_tag.get_text(strip=True)
+                summary = summary_tag.get_text(strip=True)
+                link = link_tag.get('href')
+                results.append({'title': title, 'summary': summary, 'link': link})
+        
+        return results
+    else:
+        print("Access to this URL is disallowed by robots.txt")
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 
@@ -90,3 +151,6 @@ with open("templates/dashboard.html", "w") as file:
 # Save disposal_options.html file
 with open("templates/disposal_options.html", "w") as file:
     file.write(disposal_options_html)
+
+with open("templates/reduce_waste.html", "w") as file:
+    file.write(reduce_waste_html)

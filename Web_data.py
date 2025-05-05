@@ -1,5 +1,3 @@
-
-
 # Create the index.html template
 index_html = """
 <!DOCTYPE html>
@@ -164,7 +162,7 @@ dashboard_html = """
         <p>What do you want to handle?</p>
         <div class="options">
             <a href="#">Guidance on reuse</a>
-            <a href="#">How to reduce waste</a>
+            <a href="/reduce_waste">How to reduce waste</a>
             <a href="/disposal_options/{{ location }}">Responsible disposal options</a>
         </div>
     </div>
@@ -217,6 +215,36 @@ disposal_options_html = """
         }
         window.onload = initMap;
     </script>
+</body>
+</html>
+"""
+
+# Creat the reduce_waste.html template
+reduce_waste_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Reduce Waste</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        .item { border-bottom: 1px solid #ddd; padding: 10px 0; }
+        .item a { text-decoration: none; color: blue; }
+    </style>
+</head>
+<body>
+    <h1>How to Reduce Waste</h1>
+    {% if results %}
+      {% for result in results %}
+        <div class="item">
+          <a href="{{ result.link }}" target="_blank"><h2>{{ result.title }}</h2></a>
+          <p>{{ result.summary }}</p>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No results found.</p>
+    {% endif %}
 </body>
 </html>
 """
