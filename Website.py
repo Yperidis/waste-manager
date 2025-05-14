@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, redirect, url_for
 import random
 import requests
+import os
 from Web_data import index_html, item_input_html, dashboard_html, disposal_options_html, reduce_waste_html
 from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse, urljoin
@@ -135,7 +136,10 @@ def scrape_reduce_waste():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    # Listen on 0.0.0.0 so external requests reach you
+    app.run(host='0.0.0.0', port=port, debug=False)
+    # app.run(debug=True)
 
 # Save index.html file
 with open("templates/index.html", "w") as file:
