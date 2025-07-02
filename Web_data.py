@@ -163,7 +163,8 @@ dashboard_html = """
         <div class="options">
             <a href="#">Guidance on reuse</a>
             <a href="/reduce_waste">How to reduce waste</a>
-            <a href="/disposal_options/{{ location }}">Responsible disposal options</a>
+            <a href="/item_input/{{ name }}/{{ location }}">Responsible disposal options</a>
+            <a href="/track_and_monitor/{{ location }}">Track and monitor waste</a>
         </div>
     </div>
 </body>
@@ -181,8 +182,9 @@ disposal_options_html = """
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
         .container { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
-        .buyers-list { list-style: none; padding: 0; }
-        .buyers-list li { margin: 10px 0; }
+        .buyer-card { border: 1px solid #ccc; border-radius: 10px; margin: 10px; padding: 20px; background: #f9f9f9; }
+        .buyer-name { font-weight: bold; font-size: 1.2em; }
+        .kpi { margin: 5px 0; }
         #map { height: 400px; width: 100%; margin-top: 20px; }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -191,11 +193,14 @@ disposal_options_html = """
 <body>
     <div class="container">
         <h1>Disposal Options in {{ location }}</h1>
-        <ul class="buyers-list">
-            {% for buyer in buyers %}
-                <li>{{ buyer }}</li>
-            {% endfor %}
-        </ul>
+        {% for buyer in buyers %}
+        <div class="buyer-card">
+            <div class="buyer-name">{{ buyer.name }}</div>
+            <div class="kpi">📍 Location: ({{ buyer.lat | round(3) }}, {{ buyer.lon | round(3) }})</div>
+            <div class="kpi">💶 Price: €{{ buyer.price }}</div>
+            <div class="kpi">🌱 Carbon Footprint: {{ buyer.carbon }} kg CO₂</div>
+        </div>
+        {% endfor %}
         <div id="map"></div>
     </div>
     <script>
@@ -247,4 +252,49 @@ reduce_waste_html = """
     {% endif %}
 </body>
 </html>
+"""
+
+# Creat the track_and_monitor.html template
+track_and_monitor_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Track and Monitor Disposed Items - {{ location }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .manager { border-bottom: 1px solid #ddd; padding: 15px 0; }
+        .manager:last-child { border-bottom: none; }
+        .kpi { margin-top: 10px; font-size: 0.95em; color: #555; }
+        .score { font-weight: bold; color: #2e7d32; }
+        .fail { color: #c62828; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Central Waste Managers in {{ location }}</h1>
+        <p style="text-align:center; color: #666;">Here are the latest indicators from local authorities and central operators</p>
+
+        {% for manager in managers %}
+        <div class="manager">
+            <h2>{{ manager.name }}</h2>
+            <div class="kpi">Transparency Score: <span class="score">{{ manager.transparency }}</span></div>
+            <div class="kpi">Cost per Tonne: <span class="score">€{{ manager.cost_per_tonne }}</span></div>
+            <div class="kpi">Service Coverage: <span class="score">{{ manager.coverage }}%</span></div>
+            <div class="kpi">Reported Incidents: 
+                {% if manager.incidents == 0 %}
+                    <span class="score">None</span>
+                {% else %}
+                    <span class="fail">{{ manager.incidents }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
+
 """

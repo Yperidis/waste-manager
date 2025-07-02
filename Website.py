@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for
 import random
 import requests
 import os
-from Web_data import index_html, item_input_html, dashboard_html, disposal_options_html, reduce_waste_html
+from Web_data import index_html, item_input_html, dashboard_html, disposal_options_html, reduce_waste_html, track_and_monitor_html
 from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse, urljoin
 
@@ -27,7 +27,7 @@ def signup():
     location = request.form.get('location')
     if name and email and location:
         users.append({'name': name, 'email': email, 'location': location})
-    return redirect(url_for('item_input', name=name, location=location))
+    return redirect(url_for('dashboard', name=name, location=location))
 
 @app.route('/dashboard/<name>/<location>')
 def dashboard(name, location):
@@ -36,7 +36,6 @@ def dashboard(name, location):
 @app.route('/item_input/<name>/<location>', methods=['GET', 'POST'])
 def item_input(name, location):
     if request.method == 'POST':
-        description = request.form.get('description')
         category = request.form.get('category')
         subcategory = request.form.get('subcategory')
         condition = request.form.get('condition')
@@ -51,14 +50,13 @@ def item_input(name, location):
         items.append({
             'name': name,
             'location': location,
-            'description': description,
             'category': category,
             'subcategory': subcategory,
             'condition': condition,
             'dirty': dirty,
             'photo': photo_filename
         })
-        return redirect(url_for('dashboard', name=name, location=location))
+        return redirect(url_for('disposal_options', name=name, location=location))
     
     categories = {
         "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
@@ -73,9 +71,24 @@ def disposal_options(location):
     athens_buyers = [f"Municipality {i}" for i in range(1, 11)] + [f"Buyer {i}" for i in range(1, 11)]
     
     buyers = berlin_buyers if location == "Berlin" else athens_buyers
+    # Generate buyer data with position, price, and carbon footprint
+    buyer_data = []
+    for buyer in buyers:
+        buyer_data.append({
+            "name": buyer,
+            "lat": random.uniform(52.3, 52.6) if location == "Berlin" else random.uniform(37.9, 38.1),
+            "lon": random.uniform(13.2, 13.6) if location == "Berlin" else random.uniform(23.6, 23.9),
+            "price": round(random.uniform(5.0, 50.0), 2),  # price in EUR
+            "carbon": round(random.uniform(1.0, 20.0), 2)  # kg CO₂ per transaction
+        })
     buyer_positions = {buyer: (random.uniform(52.3, 52.6), random.uniform(13.2, 13.6)) for buyer in berlin_buyers} if location == "Berlin" else {buyer: (random.uniform(37.9, 38.1), random.uniform(23.6, 23.9)) for buyer in athens_buyers}
     
-    return render_template('disposal_options.html', location=location, buyers=buyers, buyer_positions=buyer_positions)
+    return render_template('disposal_options.html', location=location, buyers=buyer_data, buyer_positions=buyer_positions)
+
+
+@app.route('/track_and_monitor//<location>')
+def track_and_monitor(location):
+    return render_template('track_and_monitor.html', location=location)
 
 
 @app.route('/reduce_waste')
@@ -145,10 +158,6 @@ if __name__ == '__main__':
 with open("templates/index.html", "w") as file:
     file.write(index_html)
 
-# Save item_input.html file
-with open("templates/item_input.html", "w") as file:
-    file.write(item_input_html)
-
 with open("templates/dashboard.html", "w") as file:
     file.write(dashboard_html)
 
@@ -156,5 +165,12 @@ with open("templates/dashboard.html", "w") as file:
 with open("templates/disposal_options.html", "w") as file:
     file.write(disposal_options_html)
 
+# Save item_input.html file
+with open("templates/item_input.html", "w") as file:
+    file.write(item_input_html)
+
 with open("templates/reduce_waste.html", "w") as file:
     file.write(reduce_waste_html)
+
+with open("templates/track_and_monitor.html", "w") as file:
+    file.write(track_and_monitor_html)

@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Track and Monitor Disposed Items - {{ location }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .manager { border-bottom: 1px solid #ddd; padding: 15px 0; }
+        .manager:last-child { border-bottom: none; }
+        .kpi { margin-top: 10px; font-size: 0.95em; color: #555; }
+        .score { font-weight: bold; color: #2e7d32; }
+        .fail { color: #c62828; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Central Waste Managers in {{ location }}</h1>
+        <p style="text-align:center; color: #666;">Here are the latest indicators from local authorities and central operators</p>
+
+        {% for manager in managers %}
+        <div class="manager">
+            <h2>{{ manager.name }}</h2>
+            <div class="kpi">Transparency Score: <span class="score">{{ manager.transparency }}</span></div>
+            <div class="kpi">Cost per Tonne: <span class="score">€{{ manager.cost_per_tonne }}</span></div>
+            <div class="kpi">Service Coverage: <span class="score">{{ manager.coverage }}%</span></div>
+            <div class="kpi">Reported Incidents: 
+                {% if manager.incidents == 0 %}
+                    <span class="score">None</span>
+                {% else %}
+                    <span class="fail">{{ manager.incidents }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
+

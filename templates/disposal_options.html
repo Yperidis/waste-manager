@@ -8,8 +8,9 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
         .container { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
-        .buyers-list { list-style: none; padding: 0; }
-        .buyers-list li { margin: 10px 0; }
+        .buyer-card { border: 1px solid #ccc; border-radius: 10px; margin: 10px; padding: 20px; background: #f9f9f9; }
+        .buyer-name { font-weight: bold; font-size: 1.2em; }
+        .kpi { margin: 5px 0; }
         #map { height: 400px; width: 100%; margin-top: 20px; }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -18,11 +19,14 @@
 <body>
     <div class="container">
         <h1>Disposal Options in {{ location }}</h1>
-        <ul class="buyers-list">
-            {% for buyer in buyers %}
-                <li>{{ buyer }}</li>
-            {% endfor %}
-        </ul>
+        {% for buyer in buyers %}
+        <div class="buyer-card">
+            <div class="buyer-name">{{ buyer.name }}</div>
+            <div class="kpi">📍 Location: ({{ buyer.lat | round(3) }}, {{ buyer.lon | round(3) }})</div>
+            <div class="kpi">💶 Price: €{{ buyer.price }}</div>
+            <div class="kpi">🌱 Carbon Footprint: {{ buyer.carbon }} kg CO₂</div>
+        </div>
+        {% endfor %}
         <div id="map"></div>
     </div>
     <script>
