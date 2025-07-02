@@ -161,7 +161,7 @@ dashboard_html = """
         <h1>Welcome, {{ name }}!</h1>
         <p>What do you want to handle?</p>
         <div class="options">
-            <a href="#">Guidance on reuse</a>
+            <a href="/reuse_waste">Guidance on reuse</a>
             <a href="/reduce_waste">How to reduce waste</a>
             <a href="/item_input/{{ name }}/{{ location }}">Responsible disposal options</a>
             <a href="/track_and_monitor/{{ location }}">Track and monitor waste</a>
@@ -203,23 +203,53 @@ disposal_options_html = """
         {% endfor %}
         <div id="map"></div>
     </div>
-    <script>
-        function initMap() {
-            var map = L.map('map').setView([52.52, 13.405], 12); // Default to Berlin
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            
-            var buyerPositions = {{ buyer_positions|tojson }};
-            Object.keys(buyerPositions).forEach(function(buyer) {
-                var position = [buyerPositions[buyer][0], buyerPositions[buyer][1]];
-                L.marker(position).addTo(map)
-                    .bindPopup(buyer)
-                    .openPopup();
-            });
-        }
-        window.onload = initMap;
-    </script>
+<script>
+    function initMap() {
+        var map = L.map('map').setView([52.52, 13.405], 12); // Default to Berlin
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var buyerPositions = {{ buyer_positions | tojson }};
+        
+        Object.keys(buyerPositions).forEach(function(buyer) {
+            var data = buyerPositions[buyer];
+            var position = [data.lat, data.lon];
+            var popupContent = `
+                <strong>${buyer}</strong><br>
+                💶 Price: €${data.price}<br>
+                🌱 Carbon: ${data.carbon} kg CO₂
+            `;
+
+            L.marker(position)
+            .addTo(map)
+            .bindTooltip(popupContent, { permanent: false, direction: 'top' });
+        });
+    }
+
+    window.onload = initMap;
+</script>
+</body>
+</html>
+"""
+
+# Creat the reuse_waste.html template
+reuse_waste_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Reuse Waste</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        .item { border-bottom: 1px solid #ddd; padding: 10px 0; }
+        .item a { text-decoration: none; color: blue; }
+    </style>
+</head>
+<body>
+    <h1>How to Reduce Waste</h1>
+    <p>Agentic flow: What sort of waste you produce would you like to consider for reuse?</p>
 </body>
 </html>
 """
@@ -240,16 +270,7 @@ reduce_waste_html = """
 </head>
 <body>
     <h1>How to Reduce Waste</h1>
-    {% if results %}
-      {% for result in results %}
-        <div class="item">
-          <a href="{{ result.link }}" target="_blank"><h2>{{ result.title }}</h2></a>
-          <p>{{ result.summary }}</p>
-        </div>
-      {% endfor %}
-    {% else %}
-      <p>No results found.</p>
-    {% endif %}
+    <p>Agentic flow: What sort of waste you produce would you like to consider for reduction?</p>
 </body>
 </html>
 """
@@ -298,3 +319,4 @@ track_and_monitor_html = """
 </html>
 
 """
+

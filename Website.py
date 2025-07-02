@@ -3,7 +3,15 @@ from flask import Flask, render_template, request, redirect, url_for
 import random
 import requests
 import os
-from Web_data import index_html, item_input_html, dashboard_html, disposal_options_html, reduce_waste_html, track_and_monitor_html
+from Web_data import (
+    index_html, 
+    item_input_html, 
+    dashboard_html, 
+    disposal_options_html, 
+    reduce_waste_html, 
+    reuse_waste_html, 
+    track_and_monitor_html,
+)
 from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse, urljoin
 
@@ -81,7 +89,15 @@ def disposal_options(location):
             "price": round(random.uniform(5.0, 50.0), 2),  # price in EUR
             "carbon": round(random.uniform(1.0, 20.0), 2)  # kg CO₂ per transaction
         })
-    buyer_positions = {buyer: (random.uniform(52.3, 52.6), random.uniform(13.2, 13.6)) for buyer in berlin_buyers} if location == "Berlin" else {buyer: (random.uniform(37.9, 38.1), random.uniform(23.6, 23.9)) for buyer in athens_buyers}
+    buyer_positions = {
+        buyer: {
+            "lat": round(random.uniform(52.3, 52.6), 4) if location == "Berlin" else round(random.uniform(37.9, 38.1), 4),
+            "lon": round(random.uniform(13.2, 13.6), 4) if location == "Berlin" else round(random.uniform(23.6, 23.9), 4),
+            "price": round(random.uniform(5.0, 50.0), 2),
+            "carbon": round(random.uniform(1.0, 20.0), 2),
+        }
+        for buyer in buyers
+    }
     
     return render_template('disposal_options.html', location=location, buyers=buyer_data, buyer_positions=buyer_positions)
 
@@ -89,6 +105,12 @@ def disposal_options(location):
 @app.route('/track_and_monitor//<location>')
 def track_and_monitor(location):
     return render_template('track_and_monitor.html', location=location)
+
+
+@app.route('/reuse_waste')
+def reuse_waste():
+    # Scrape information from an external site that has content on reducing waste.
+    return render_template('reuse_waste.html')
 
 
 @app.route('/reduce_waste')
@@ -168,6 +190,9 @@ with open("templates/disposal_options.html", "w") as file:
 # Save item_input.html file
 with open("templates/item_input.html", "w") as file:
     file.write(item_input_html)
+
+with open("templates/reuse_waste.html", "w") as file:
+    file.write(reuse_waste_html)
 
 with open("templates/reduce_waste.html", "w") as file:
     file.write(reduce_waste_html)

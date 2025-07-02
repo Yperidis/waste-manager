@@ -29,22 +29,31 @@
         {% endfor %}
         <div id="map"></div>
     </div>
-    <script>
-        function initMap() {
-            var map = L.map('map').setView([52.52, 13.405], 12); // Default to Berlin
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            
-            var buyerPositions = {{ buyer_positions|tojson }};
-            Object.keys(buyerPositions).forEach(function(buyer) {
-                var position = [buyerPositions[buyer][0], buyerPositions[buyer][1]];
-                L.marker(position).addTo(map)
-                    .bindPopup(buyer)
-                    .openPopup();
-            });
-        }
-        window.onload = initMap;
-    </script>
+<script>
+    function initMap() {
+        var map = L.map('map').setView([52.52, 13.405], 12); // Default to Berlin
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var buyerPositions = {{ buyer_positions | tojson }};
+        
+        Object.keys(buyerPositions).forEach(function(buyer) {
+            var data = buyerPositions[buyer];
+            var position = [data.lat, data.lon];
+            var popupContent = `
+                <strong>${buyer}</strong><br>
+                💶 Price: €${data.price}<br>
+                🌱 Carbon: ${data.carbon} kg CO₂
+            `;
+
+            L.marker(position)
+            .addTo(map)
+            .bindTooltip(popupContent, { permanent: false, direction: 'top' });
+        });
+    }
+
+    window.onload = initMap;
+</script>
 </body>
 </html>
