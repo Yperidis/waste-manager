@@ -53,6 +53,8 @@ item_input_html = """
       <select name="category" id="category">
         <option value="">Select a category</option>
         <option value="Plastics">Plastics</option>
+        <option value="Plastic Films">Plastic Films</option>
+        <option value="Textiles">Textiles</option>
       </select><br><br>
       
       <label>Subcategory:</label>
@@ -99,7 +101,8 @@ item_input_html = """
     // Define available subcategories.
     const categories = {
       "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
-      "Plastic Films": ["LDP", "HDP"]
+      "Plastic Films": ["LDP", "HDP"],
+      "Textiles": ["H&M"]
     };
 
     // When a category is selected, update the subcategory options.
@@ -164,7 +167,7 @@ dashboard_html = """
             <a href="/reuse_waste">Guidance on reuse</a>
             <a href="/reduce_waste">How to reduce waste</a>
             <a href="/item_input/{{ name }}/{{ location }}">Responsible disposal options</a>
-            <a href="/track_and_monitor/{{ location }}">Track and monitor waste</a>
+            <a href="/item_input/{{ name }}/{{ location }}/track">Track and Monitor Waste</a>
         </div>
     </div>
 </body>

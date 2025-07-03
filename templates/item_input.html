@@ -19,6 +19,8 @@
       <select name="category" id="category">
         <option value="">Select a category</option>
         <option value="Plastics">Plastics</option>
+        <option value="Plastic Films">Plastic Films</option>
+        <option value="Textiles">Textiles</option>
       </select><br><br>
       
       <label>Subcategory:</label>
@@ -65,7 +67,8 @@
     // Define available subcategories.
     const categories = {
       "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
-      "Plastic Films": ["LDP", "HDP"]
+      "Plastic Films": ["LDP", "HDP"],
+      "Textiles": ["H&M"]
     };
 
     // When a category is selected, update the subcategory options.

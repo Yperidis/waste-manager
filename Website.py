@@ -41,8 +41,9 @@ def signup():
 def dashboard(name, location):
     return render_template('dashboard.html', name=name, location=location)
 
-@app.route('/item_input/<name>/<location>', methods=['GET', 'POST'])
-def item_input(name, location):
+@app.route('/item_input/<name>/<location>', defaults={'mode': None}, methods=['GET', 'POST'])
+@app.route('/item_input/<name>/<location>/<mode>', methods=['GET', 'POST'])
+def item_input(name, location, mode):
     if request.method == 'POST':
         category = request.form.get('category')
         subcategory = request.form.get('subcategory')
@@ -64,13 +65,19 @@ def item_input(name, location):
             'dirty': dirty,
             'photo': photo_filename
         })
-        return redirect(url_for('disposal_options', name=name, location=location))
+        item_index = len(items) - 1
+
+        if mode == 'track':
+            return redirect(url_for('track_and_monitor', name=name, location=location, item_index=item_index))
+        else:
+            return redirect(url_for('disposal_options', name=name, location=location))
     
     categories = {
         "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
-        "Plastic Films": ["LDP", "HDP"]
+        "Plastic Films": ["LDP", "HDP"],
+        "Textiles": ["H&M"],
     }
-    
+
     return render_template('item_input.html', name=name, location=location, categories=categories)
 
 @app.route('/disposal_options/<location>')
@@ -102,9 +109,11 @@ def disposal_options(location):
     return render_template('disposal_options.html', location=location, buyers=buyer_data, buyer_positions=buyer_positions)
 
 
-@app.route('/track_and_monitor//<location>')
-def track_and_monitor(location):
-    return render_template('track_and_monitor.html', location=location)
+@app.route('/track_and_monitor/<location>/<int:item_index>')
+def track_and_monitor(location, item_index):
+    item = items[item_index]
+    print(f"Serving monitoring dashboard for item {item} at location {location}")
+    return render_template('track_and_monitor.html', location=location, item=item)
 
 
 @app.route('/reuse_waste')
