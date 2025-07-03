@@ -193,14 +193,6 @@ disposal_options_html = """
 <body>
     <div class="container">
         <h1>Disposal Options in {{ location }}</h1>
-        {% for buyer in buyers %}
-        <div class="buyer-card">
-            <div class="buyer-name">{{ buyer.name }}</div>
-            <div class="kpi">📍 Location: ({{ buyer.lat | round(3) }}, {{ buyer.lon | round(3) }})</div>
-            <div class="kpi">💶 Price: €{{ buyer.price }}</div>
-            <div class="kpi">🌱 Carbon Footprint: {{ buyer.carbon }} kg CO₂</div>
-        </div>
-        {% endfor %}
         <div id="map"></div>
     </div>
 <script>
