@@ -1,9 +1,10 @@
+from analytics import init_dashboard
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, redirect, url_for
 import random
 import requests
 import os
-from Web_data import (
+from web_data import (
     index_html, 
     item_input_html, 
     dashboard_html, 
@@ -16,8 +17,8 @@ from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse, urljoin
 
 app = Flask(__name__)
+init_dashboard(app)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-import os
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Placeholder for storing user data (in-memory, for MVP purposes)
