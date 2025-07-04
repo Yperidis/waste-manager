@@ -292,8 +292,12 @@ track_and_monitor_html = """
 <body>
     <div class="container">
         <h1>Central Waste Managers in {{ location }}</h1>
-        <p style="text-align:center; color: #666;">Here are the latest indicators from local authorities and central operators</p>
-        <iframe src="/analytics/" style="width:100%; height:600px; border:none;"></iframe>
+        {% if show_dashboard %}
+            <p style="text-align:center; color: #666;">Here are the latest indicators from local authorities and central operators</p>
+            <iframe src="/analytics/" style="width:100%; height:600px; border:none;"></iframe>
+        {% else %}
+            <p style="text-align:center; color:#888;">No analytics dashboard available for this item type ({{ item.category }}).</p>
+        {% endif %}
 
         {% for manager in managers %}
         <div class="manager">

@@ -114,7 +114,8 @@ def disposal_options(location):
 def track_and_monitor(location, item_index):
     item = items[item_index]
     print(f"Serving monitoring dashboard for item {item} at location {location}")
-    return render_template('track_and_monitor.html', location=location, item=item)
+    show_dashboard = item.get('category', '').lower() == 'textiles'
+    return render_template('track_and_monitor.html', location=location, item=item, show_dashboard=show_dashboard)
 
 
 @app.route('/reuse_waste')
