@@ -1,4 +1,5 @@
 import dash
+from branch_utils import fetch_hm_branches_osm
 from dash import html, dcc, Input, Output
 import dash_leaflet as dl
 import pandas as pd
@@ -16,17 +17,18 @@ def scrape_branch_data(city):
     snippets = [p.get_text() for p in soup.select('div.BNeawe')[:5]]
     return snippets
 
+
 # H&M locations sample
-branches = {
-    'Berlin': [
-        {'name': 'H&M Friedrichstraße', 'lat': 52.5208, 'lon': 13.3877},
-        {'name': 'H&M Kurfürstendamm', 'lat': 52.5026, 'lon': 13.3302},
-    ],
-    'Athens': [
-        {'name': 'H&M Ermou', 'lat': 37.9755, 'lon': 23.7341},
-        {'name': 'H&M The Mall', 'lat': 38.0248, 'lon': 23.7462},
-    ]
-}
+# branches = {
+#     'Berlin': [
+#         {'name': 'H&M Friedrichstraße', 'lat': 52.5208, 'lon': 13.3877},
+#         {'name': 'H&M Kurfürstendamm', 'lat': 52.5026, 'lon': 13.3302},
+#     ],
+#     'Athens': [
+#         {'name': 'H&M Ermou', 'lat': 37.9755, 'lon': 23.7341},
+#         {'name': 'H&M The Mall', 'lat': 38.0248, 'lon': 23.7462},
+#     ]
+# }
 
 def init_dashboard(server):
     dash_app = dash.Dash(__name__, server=server, routes_pathname_prefix="/analytics/")
@@ -49,9 +51,12 @@ def init_dashboard(server):
     )
     def update_map(query_string):
         parsed = parse_qs(query_string.lstrip('?'))
-        city = parsed.get('location', ['Berlin'])[0]
+        city = parsed.get('location', ['Berlin'])[0]  # fallback to Berlin
+        branches = fetch_hm_branches_osm(city)
+        if not branches:
+            return [dl.TileLayer()], (0,0), html.Div("No H&M branches found."), []
 
-        brs = branches.get(city, [])
+        brs = branches
         markers = [dl.Marker(position=(b['lat'], b['lon']), children=dl.Popup(f"{b['name']}")) for b in brs]
         center = (brs[0]['lat'], brs[0]['lon']) if brs else (0, 0)
 
