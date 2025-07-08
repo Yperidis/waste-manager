@@ -21,7 +21,7 @@
         <h1>Central Waste Managers in {{ location }}</h1>
         {% if show_dashboard %}
             <p style="text-align:center; color: #666;">Here are the latest indicators from local authorities and central operators</p>
-            <iframe src="/analytics/" style="width:100%; height:600px; border:none;"></iframe>
+            <iframe src="{{ dash_url }}" style="width:100%; height:600px; border:none;"></iframe>
         {% else %}
             <p style="text-align:center; color:#888;">No analytics dashboard available for this item type ({{ item.category }}).</p>
         {% endif %}
