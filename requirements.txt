@@ -3,6 +3,7 @@ beautifulsoup4==4.13.3
 blinker==1.9.0
 bs4==0.0.2
 cachelib==0.13.0
+certifi==2025.6.15
 charset-normalizer==3.4.1
 click==8.1.8
 colorcet==3.1.0
@@ -31,12 +32,14 @@ numpy==2.3.1
 packaging==25.0
 pandas==2.3.0
 plotly==6.2.0
+prometheus_client==0.23.1
 protobuf==6.31.1
 pydantic==2.11.7
 pydantic_core==2.33.2
 python-dateutil==2.9.0.post0
 pytz==2025.2
 PyYAML==6.0.2
+requests==2.32.4
 retrying==1.4.0
 setuptools==75.1.0
 six==1.17.0
