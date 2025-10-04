@@ -1,6 +1,6 @@
 from analytics import init_dashboard
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, Response, url_for
 import random
 import requests
 import os
@@ -13,6 +13,7 @@ from web_data import (
     reuse_waste_html, 
     track_and_monitor_html,
 )
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse, urljoin
 
@@ -21,13 +22,28 @@ init_dashboard(app)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Example metric
+requests_total = Counter('http_requests_total', 'Total HTTP requests')
+
+@app.before_request
+def before_request():
+    requests_total.inc()
+
+
+@app.route("/metrics")
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
+
 # Placeholder for storing user data (in-memory, for MVP purposes)
 users = []
 items = []
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -38,9 +54,11 @@ def signup():
         users.append({'name': name, 'email': email, 'location': location})
     return redirect(url_for('dashboard', name=name, location=location))
 
+
 @app.route('/dashboard/<name>/<location>')
 def dashboard(name, location):
     return render_template('dashboard.html', name=name, location=location)
+
 
 @app.route('/item_input/<name>/<location>', defaults={'mode': None}, methods=['GET', 'POST'])
 @app.route('/item_input/<name>/<location>/<mode>', methods=['GET', 'POST'])
@@ -80,6 +98,7 @@ def item_input(name, location, mode):
     }
 
     return render_template('item_input.html', name=name, location=location, categories=categories)
+
 
 @app.route('/disposal_options/<location>')
 def disposal_options(location):
