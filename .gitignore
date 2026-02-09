@@ -5,3 +5,5 @@
 **/static/uploads
 
 **/data/
+
+Dockerfile_local.dockerfile
