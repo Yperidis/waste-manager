@@ -1,9 +1,14 @@
-from analytics import init_dashboard
-from bs4 import BeautifulSoup
-from flask import Flask, render_template, request, redirect, Response, url_for
 import random
 import requests
 import os
+
+from analytics import init_dashboard
+from bs4 import BeautifulSoup
+from flask import Flask, render_template, request, redirect, Response, url_for
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+from urllib.robotparser import RobotFileParser
+from urllib.parse import urlparse, urljoin
+
 from web_data import (
     index_html, 
     item_input_html, 
@@ -13,11 +18,11 @@ from web_data import (
     reuse_waste_html, 
     track_and_monitor_html,
 )
-from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
-from urllib.robotparser import RobotFileParser
-from urllib.parse import urlparse, urljoin
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(os.path.dirname(__file__), '..', 'templates')
+    )
 init_dashboard(app)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
