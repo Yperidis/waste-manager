@@ -2,14 +2,14 @@ import random
 import requests
 import os
 
-from analytics import init_dashboard
+from app.analytics import init_dashboard
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, redirect, Response, url_for
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse, urljoin
 
-from web_data import (
+from app.web_data import (
     index_html, 
     item_input_html, 
     dashboard_html, 

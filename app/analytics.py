@@ -1,10 +1,11 @@
 import dash
-from branch_utils import fetch_hm_branches_osm
-from dash import html, dcc, Input, Output
 import dash_leaflet as dl
 import pandas as pd
 import requests
+
+from app.branch_utils import fetch_hm_branches_osm
 from bs4 import BeautifulSoup
+from dash import html, dcc, Input, Output
 from urllib.parse import parse_qs
 
 
