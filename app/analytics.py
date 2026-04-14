@@ -1,3 +1,5 @@
+"""Analytics helpers for the waste management MVP."""
+
 import dash
 import dash_leaflet as dl
 import pandas as pd
@@ -6,11 +8,23 @@ import requests
 from app.branch_utils import fetch_hm_branches_osm
 from bs4 import BeautifulSoup
 from dash import html, dcc, Input, Output
+from flask import Flask
 from urllib.parse import parse_qs
 
 
-def scrape_branch_data(city):
-    # Example: scrape "H&M Berlin textile recycling" search pages
+def scrape_branch_data(city: str) -> list[str]:
+    """Scrape public search snippets for H&M textile recycling intake pages.
+
+    Parameters
+    ----------
+    city : str
+        Name of the city to search for.
+
+    Returns
+    -------
+    list[str]
+        Text snippets extracted from the first search result page.
+    """
     query = f"H&M {city} textile recycling intake"
     url = "https://www.google.com/search"
     resp = requests.get(url, params={'q': query}, headers={'User-Agent': '*'})
@@ -31,7 +45,19 @@ def scrape_branch_data(city):
 #     ]
 # }
 
-def init_dashboard(server):
+def init_dashboard(server: Flask) -> dash.Dash:
+    """Create and register a Dash analytics dashboard on the Flask server.
+
+    Parameters
+    ----------
+    server : flask.Flask
+        The Flask server instance used as the Dash parent.
+
+    Returns
+    -------
+    dash.Dash
+        The configured Dash application instance.
+    """
     dash_app = dash.Dash(__name__, server=server, routes_pathname_prefix="/analytics/")
 
     dash_app.layout = html.Div([
@@ -50,7 +76,19 @@ def init_dashboard(server):
          Output('snippets', 'children')],
         Input('url', 'search')
     )
-    def update_map(query_string):
+    def update_map(query_string: str) -> tuple[list, tuple[float, float]]:
+        """Update dashboard content based on the current query string.
+
+        Parameters
+        ----------
+        query_string : str
+            The raw URL query string provided by Dash.
+
+        Returns
+        -------
+        tuple[list, tuple[float, float], html.Div, list]
+            Children components for the map, center coordinates, KPI output, and snippet list items.
+        """
         parsed = parse_qs(query_string.lstrip('?'))
         city = parsed.get('location', ['Berlin'])[0]  # fallback to Berlin
         branches = fetch_hm_branches_osm(city)

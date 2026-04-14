@@ -1,3 +1,5 @@
+"""Flask application routes and support utilities for the waste management MVP."""
+
 import random
 import requests
 import os
@@ -31,12 +33,14 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 requests_total = Counter('http_requests_total', 'Total HTTP requests')
 
 @app.before_request
-def before_request():
+def before_request() -> None:
+    """Increment the request counter before each incoming request."""
     requests_total.inc()
 
 
 @app.route("/metrics")
-def metrics():
+def metrics() -> Response:
+    """Return metrics for monitoring."""
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 
@@ -47,11 +51,13 @@ items = []
 
 @app.route('/')
 def index():
+    """Render the homepage."""
     return render_template('index.html')
 
 
 @app.route('/signup', methods=['POST'])
 def signup():
+    """Capture signup form values and redirect users to the dashboard."""
     name = request.form.get('name')
     email = request.form.get('email')
     location = request.form.get('location')
@@ -61,25 +67,42 @@ def signup():
 
 
 @app.route('/dashboard/<name>/<location>')
-def dashboard(name, location):
+def dashboard(name: str, location: str):
+    """Render the user dashboard for the provided name and location."""
     return render_template('dashboard.html', name=name, location=location)
 
 
 @app.route('/item_input/<name>/<location>', defaults={'mode': None}, methods=['GET', 'POST'])
 @app.route('/item_input/<name>/<location>/<mode>', methods=['GET', 'POST'])
-def item_input(name, location, mode):
+def item_input(name: str, location: str, mode: str):
+    """Render an item intake form or process a submitted item.
+
+    Parameters
+    ----------
+    name : str
+        The name of the user.
+    location : str
+        The selected location context.
+    mode : str | None
+        Optional workflow mode, such as 'track'.
+
+    Returns
+    -------
+    Response
+        Flask response object for the rendered template or redirect.
+    """
     if request.method == 'POST':
         category = request.form.get('category')
         subcategory = request.form.get('subcategory')
         condition = request.form.get('condition')
         dirty = request.form.get('dirty')
-        
+
         photo = request.files.get('photo')
         photo_filename = None
         if photo:
             photo_filename = os.path.join(app.config['UPLOAD_FOLDER'], photo.filename)
             photo.save(photo_filename)
-        
+
         items.append({
             'name': name,
             'location': location,
@@ -93,9 +116,8 @@ def item_input(name, location, mode):
 
         if mode == 'track':
             return redirect(url_for('track_and_monitor', name=name, location=location, item_index=item_index))
-        else:
-            return redirect(url_for('disposal_options', name=name, location=location))
-    
+        return redirect(url_for('disposal_options', name=name, location=location))
+
     categories = {
         "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
         "Plastic Films": ["LDP", "HDP"],
@@ -106,20 +128,31 @@ def item_input(name, location, mode):
 
 
 @app.route('/disposal_options/<location>')
-def disposal_options(location):
+def disposal_options(location: str):
+    """Render disposal options for a specific location.
+
+    Parameters
+    ----------
+    location : str
+        The city or location being evaluated.
+
+    Returns
+    -------
+    flask.Response
+        Rendered disposal options page.
+    """
     berlin_buyers = ["BSR", "ALBA"] + [f"Buyer {i}" for i in range(1, 11)]
     athens_buyers = [f"Municipality {i}" for i in range(1, 11)] + [f"Buyer {i}" for i in range(1, 11)]
-    
+
     buyers = berlin_buyers if location == "Berlin" else athens_buyers
-    # Generate buyer data with position, price, and carbon footprint
     buyer_data = []
     for buyer in buyers:
         buyer_data.append({
             "name": buyer,
             "lat": random.uniform(52.3, 52.6) if location == "Berlin" else random.uniform(37.9, 38.1),
             "lon": random.uniform(13.2, 13.6) if location == "Berlin" else random.uniform(23.6, 23.9),
-            "price": round(random.uniform(5.0, 50.0), 2),  # price in EUR
-            "carbon": round(random.uniform(1.0, 20.0), 2)  # kg CO₂ per transaction
+            "price": round(random.uniform(5.0, 50.0), 2),
+            "carbon": round(random.uniform(1.0, 20.0), 2),
         })
     buyer_positions = {
         buyer: {
@@ -130,12 +163,26 @@ def disposal_options(location):
         }
         for buyer in buyers
     }
-    
+
     return render_template('disposal_options.html', location=location, buyers=buyer_data, buyer_positions=buyer_positions)
 
 
 @app.route('/track_and_monitor/<location>/<int:item_index>')
-def track_and_monitor(location, item_index):
+def track_and_monitor(location: str, item_index: int):
+    """Render the tracking and monitoring page for a selected item.
+
+    Parameters
+    ----------
+    location : str
+        The location context for monitoring.
+    item_index : int
+        Index of the tracked item in memory.
+
+    Returns
+    -------
+    flask.Response
+        Rendered tracking page with dashboard visibility.
+    """
     item = items[item_index]
     dash_url = f"/analytics/?location={location}"
     print(f"Serving monitoring dashboard for item {item} at location {location}")
@@ -146,22 +193,36 @@ def track_and_monitor(location, item_index):
         item=item, 
         show_dashboard=show_dashboard, 
         dash_url=dash_url
-        )
+    )
 
 
 @app.route('/reuse_waste')
 def reuse_waste():
-    # Scrape information from an external site that has content on reducing waste.
+    """Render the reuse waste guidance page."""
     return render_template('reuse_waste.html')
 
 
 @app.route('/reduce_waste')
 def reduce_waste():
-    # Scrape information from an external site that has content on reducing waste.
+    """Render the reduce waste page with external results."""
     results = scrape_reduce_waste()
     return render_template('reduce_waste.html', results=results)
 
-def is_allowed(url, user_agent='*'):
+def is_allowed(url: str, user_agent='*'):
+    """Check robots.txt to verify whether crawling is permitted.
+
+    Parameters
+    ----------
+    url : str
+        The URL to verify.
+    user_agent : str, optional
+        User agent string to evaluate against robots.txt, by default '*'.
+
+    Returns
+    -------
+    bool
+        True if the URL is allowed, otherwise False.
+    """
     parsed_url = urlparse(url)
     base_url = f'{parsed_url.scheme}://{parsed_url.netloc}'
     robots_url = urljoin(base_url, 'robots.txt')
@@ -171,31 +232,28 @@ def is_allowed(url, user_agent='*'):
     rp.read()
     return rp.can_fetch(user_agent, url)
 
-def scrape_reduce_waste():
+def scrape_reduce_waste() -> list[dict[str, str]] | None:
+    """Fetch waste reduction content from an external web source when allowed.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        A list of result items with title, summary, and link fields.
     """
-    This function uses requests and BeautifulSoup to perform a respectful crawl.
-    Ensure the target site allows crawling (check its robots.txt) and adjust the URL and parsing logic accordingly.
-    """
-    # Replace with a valid URL that allows crawling.
     url = "https://onetreeplanted.org"
-    headers = {
-        'User-Agent': '*'}
+    headers = {'User-Agent': '*'}
 
     if is_allowed(url, 'YourBotName'):
-        response = requests.get(url)
-
         try:
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
             print("Error fetching data:", e)
             return []
-        
+
         soup = BeautifulSoup(response.content, 'html.parser')
         results = []
-        
-        # The following parsing logic assumes that each article is contained in an <article> tag.
-        # Adjust selectors as required by the structure of your target page.
+
         articles = soup.find_all('article')
         for article in articles:
             title_tag = article.find('h2')
@@ -206,10 +264,9 @@ def scrape_reduce_waste():
                 summary = summary_tag.get_text(strip=True)
                 link = link_tag.get('href')
                 results.append({'title': title, 'summary': summary, 'link': link})
-        
+
         return results
-    else:
-        print("Access to this URL is disallowed by robots.txt")
+    print("Access to this URL is disallowed by robots.txt")
 
 
 if __name__ == '__main__':
