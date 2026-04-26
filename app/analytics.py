@@ -2,114 +2,231 @@
 
 import dash
 import dash_leaflet as dl
-import pandas as pd
 import requests
 
 from app.branch_utils import fetch_hm_branches_osm
 from bs4 import BeautifulSoup
-from dash import html, dcc, Input, Output
+from dash import html, dcc, Input, Output, State
 from flask import Flask
 from urllib.parse import parse_qs
 
+# Configuration for waste categories
+WASTE_CATEGORIES = {
+    "Textiles": ["H&M", "Zara", "Local Charity"],
+    "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
+    "Plastic Films": ["LDP", "HDP"],
+}
 
-def scrape_branch_data(city: str) -> list[str]:
-    """Scrape public search snippets for H&M textile recycling intake pages.
+
+def scrape_branch_data(city: str, subcategory: str) -> list[str]:
+    """Scrape snippets for specific waste categories and locations.
 
     Parameters
     ----------
     city : str
-        Name of the city to search for.
+        The city for recycling search.
+    subcategory : str
+        The waste subcategory or brand.
 
     Returns
     -------
     list[str]
-        Text snippets extracted from the first search result page.
+        List of scraped text snippets.
     """
-    query = f"H&M {city} textile recycling intake"
+    query = f"{subcategory} {city} recycling intake"
     url = "https://www.google.com/search"
-    resp = requests.get(url, params={'q': query}, headers={'User-Agent': '*'})
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    snippets = [p.get_text() for p in soup.select('div.BNeawe')[:5]]
-    return snippets
+    try:
+        resp = requests.get(
+            url, params={"q": query}, headers={"User-Agent": "*"}, timeout=5
+        )
+        soup = BeautifulSoup(resp.text, "html.parser")
+        snippets = [p.get_text() for p in soup.select("div.BNeawe")[:5]]
+        return snippets
+    except Exception:
+        return ["Data currently unavailable from external sources."]
 
-
-# H&M locations sample
-# branches = {
-#     'Berlin': [
-#         {'name': 'H&M Friedrichstraße', 'lat': 52.5208, 'lon': 13.3877},
-#         {'name': 'H&M Kurfürstendamm', 'lat': 52.5026, 'lon': 13.3302},
-#     ],
-#     'Athens': [
-#         {'name': 'H&M Ermou', 'lat': 37.9755, 'lon': 23.7341},
-#         {'name': 'H&M The Mall', 'lat': 38.0248, 'lon': 23.7462},
-#     ]
-# }
 
 def init_dashboard(server: Flask) -> dash.Dash:
-    """Create and register a Dash analytics dashboard on the Flask server.
+    """Create and register a Dash analytics dashboard with dynamic user inputs.
 
     Parameters
     ----------
-    server : flask.Flask
-        The Flask server instance used as the Dash parent.
+    server : Flask
+        The Flask server instance to register the Dash app with.
 
     Returns
     -------
     dash.Dash
-        The configured Dash application instance.
+        The initialized Dash application.
     """
     dash_app = dash.Dash(__name__, server=server, routes_pathname_prefix="/analytics/")
 
-    dash_app.layout = html.Div([
-        dcc.Location(id='url', refresh=False),
-        html.H1("Textile Inflows to H&M Branches"),
-        dl.Map(id='branch-map', style={'width': '100%', 'height': '400px'}, center=[52.52, 13.405], zoom=12, children=[dl.TileLayer()]),
-        html.Div(id='kpi-output'),
-        html.H3("Scraped Public Data Snippets"),
-        html.Ul(id='snippets')
-    ])
-
-    @dash_app.callback(
-        [Output('branch-map', 'children'),
-         Output('branch-map', 'center'),
-         Output('kpi-output', 'children'),
-         Output('snippets', 'children')],
-        Input('url', 'search')
+    dash_app.layout = html.Div(
+        [
+            dcc.Location(id="url", refresh=False),
+            html.Div(
+                [
+                    html.H1("Waste Flow Analytics Dashboard"),
+                    # Category Selectors
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.Label("Main Category:"),
+                                    dcc.Dropdown(
+                                        id="category-dropdown",
+                                        options=[
+                                            {"label": k, "value": k}
+                                            for k in WASTE_CATEGORIES.keys()
+                                        ],
+                                        value="Textiles",
+                                        clearable=False,
+                                    ),
+                                ],
+                                style={"width": "48%", "display": "inline-block"},
+                            ),
+                            html.Div(
+                                [
+                                    html.Label("Subcategory/Brand:"),
+                                    dcc.Dropdown(
+                                        id="subcategory-dropdown", clearable=False
+                                    ),
+                                ],
+                                style={
+                                    "width": "48%",
+                                    "display": "inline-block",
+                                    "float": "right",
+                                },
+                            ),
+                        ],
+                        style={
+                            "padding": "20px",
+                            "background": "#f9f9f9",
+                            "borderRadius": "10px",
+                            "marginBottom": "20px",
+                        },
+                    ),
+                ]
+            ),
+            dl.Map(
+                id="branch-map",
+                style={"width": "100%", "height": "400px"},
+                center=[52.52, 13.405],
+                zoom=12,
+                children=[dl.TileLayer()],
+            ),
+            html.Div(id="kpi-output", style={"marginTop": "20px"}),
+            html.H3("Market Intelligence & Public Data"),
+            html.Ul(id="snippets"),
+        ],
+        style={"padding": "20px"},
     )
-    def update_map(query_string: str) -> tuple[list, tuple[float, float]]:
-        """Update dashboard content based on the current query string.
+
+    # Callback 1: Update subcategory dropdown based on category
+    @dash_app.callback(
+        [
+            Output("subcategory-dropdown", "options"),
+            Output("subcategory-dropdown", "value"),
+        ],
+        Input("category-dropdown", "value"),
+    )
+    def update_subcategory_list(selected_category: str):
+        """Update the subcategory dropdown options based on selected category.
+
+        Parameters
+        ----------
+        selected_category : str
+            The selected main waste category.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the options list and the default value.
+        """
+        subs = WASTE_CATEGORIES.get(selected_category, [])
+        options = [{"label": s, "value": s} for s in subs]
+        default_value = subs if subs else None
+        return options, default_value
+
+    # Callback 2: Update Map, KPIs, and Scraped Data
+    @dash_app.callback(
+        [
+            Output("branch-map", "children"),
+            Output("branch-map", "center"),
+            Output("kpi-output", "children"),
+            Output("snippets", "children"),
+        ],
+        [Input("url", "search"), Input("subcategory-dropdown", "value")],
+        [State("category-dropdown", "value")],
+    )
+    def update_dashboard_content(query_string: str, subcategory: str, category: str):
+        """Update the dashboard map, KPIs, and scraped data based on inputs.
 
         Parameters
         ----------
         query_string : str
-            The raw URL query string provided by Dash.
+            The URL query string containing location.
+        subcategory : str
+            The selected subcategory.
+        category : str
+            The selected main category.
 
         Returns
         -------
-        tuple[list, tuple[float, float], html.Div, list]
-            Children components for the map, center coordinates, KPI output, and snippet list items.
+        tuple
+            A tuple containing map children, center coordinates, KPI div, and snippets list.
         """
-        parsed = parse_qs(query_string.lstrip('?'))
-        city = parsed.get('location', ['Berlin'])[0]  # fallback to Berlin
-        branches = fetch_hm_branches_osm(city)
-        if not branches:
-            return [dl.TileLayer()], (0,0), html.Div("No H&M branches found."), []
+        # 1. Handle Location Parsing
+        parsed = parse_qs(query_string.lstrip("?"))
+        city = parsed.get("location", ["Berlin"])
 
-        brs = branches
-        markers = [dl.Marker(position=(b['lat'], b['lon']), children=dl.Popup(f"{b['name']}")) for b in brs]
-        center = (brs[0]['lat'], brs[0]['lon']) if brs else (0, 0)
+        if not subcategory:
+            return [dl.TileLayer()], (0, 0), html.Div("Select a category to begin."), []
 
-        # Simple KPI estimates
-        df = pd.DataFrame(brs)
-        total_inflow = len(brs) * 2000
-        kpis = html.Div([
-            html.P(f"Estimated total inflow: {total_inflow} kg/month"),
-            html.P(f"Branches: {len(brs)}")
-        ])
+        # 2. Fetch Geographic Data (Simulated logic for OSM/Branches)
+        # In a real scenario, fetch_hm_branches_osm would be parameterized by subcategory
+        branches = fetch_hm_branches_osm(city) if subcategory == "H&M" else []
 
-        snippets = [html.Li(text) for text in scrape_branch_data(city)]
-        children = [dl.TileLayer()] + markers
+        # 3. Build Map Markers
+        markers = [
+            dl.Marker(
+                position=(b["lat"], b["lon"]),
+                children=dl.Popup(f"{b['name']} - {subcategory}"),
+            )
+            for b in branches
+        ]
+        center = (branches["lat"], branches["lon"]) if branches else (52.52, 13.405)
 
-        return children, center, kpis, snippets
+        # 4. Generate Dynamic KPIs
+        # Logic varies based on category (Textiles vs Plastics)
+        multiplier = 2000 if category == "Textiles" else 500
+        total_volume = len(branches) * multiplier
+
+        kpis = html.Div(
+            [
+                html.Div(
+                    [
+                        html.Strong(
+                            f"Current View: {city} | {category} ({subcategory})"
+                        ),
+                        html.P(f"Estimated Monthly Processing: {total_volume} kg"),
+                        html.P(f"Active Intake Facilities: {len(branches)}"),
+                    ],
+                    style={
+                        "padding": "15px",
+                        "borderLeft": "5px solid #2e7d32",
+                        "background": "#e8f5e9",
+                    },
+                )
+            ]
+        )
+
+        # 5. Fetch Scraped Data
+        snippets_list = [
+            html.Li(text) for text in scrape_branch_data(city, subcategory)
+        ]
+        map_children = [dl.TileLayer()] + markers
+
+        return map_children, center, kpis, snippets_list
 
     return dash_app

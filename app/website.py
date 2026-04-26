@@ -12,25 +12,25 @@ from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse, urljoin
 
 from app.web_data import (
-    index_html, 
-    item_input_html, 
-    dashboard_html, 
-    disposal_options_html, 
-    reduce_waste_html, 
-    reuse_waste_html, 
+    index_html,
+    item_input_html,
+    dashboard_html,
+    disposal_options_html,
+    reduce_waste_html,
+    reuse_waste_html,
     track_and_monitor_html,
 )
 
 app = Flask(
-    __name__,
-    template_folder=os.path.join(os.path.dirname(__file__), '..', 'templates')
-    )
+    __name__, template_folder=os.path.join(os.path.dirname(__file__), "..", "templates")
+)
 init_dashboard(app)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+app.config["UPLOAD_FOLDER"] = "static/uploads"
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 # Example metric
-requests_total = Counter('http_requests_total', 'Total HTTP requests')
+requests_total = Counter("http_requests_total", "Total HTTP requests")
+
 
 @app.before_request
 def before_request() -> None:
@@ -49,31 +49,45 @@ users = []
 items = []
 
 
-@app.route('/')
-def index():
-    """Render the homepage."""
-    return render_template('index.html')
+@app.route("/")
+def index() -> Response:
+    """Render the homepage.
+
+    Returns
+    -------
+    Response
+        The rendered homepage template.
+    """
+    return render_template("index.html")
 
 
-@app.route('/signup', methods=['POST'])
-def signup():
-    """Capture signup form values and redirect users to the dashboard."""
-    name = request.form.get('name')
-    email = request.form.get('email')
-    location = request.form.get('location')
+@app.route("/signup", methods=["POST"])
+def signup() -> Response:
+    """Capture signup form values and redirect users to the dashboard.
+
+    Returns
+    -------
+    Response
+        Redirect response to the dashboard.
+    """
+    name = request.form.get("name")
+    email = request.form.get("email")
+    location = request.form.get("location")
     if name and email and location:
-        users.append({'name': name, 'email': email, 'location': location})
-    return redirect(url_for('dashboard', name=name, location=location))
+        users.append({"name": name, "email": email, "location": location})
+    return redirect(url_for("dashboard", name=name, location=location))
 
 
-@app.route('/dashboard/<name>/<location>')
+@app.route("/dashboard/<name>/<location>")
 def dashboard(name: str, location: str):
     """Render the user dashboard for the provided name and location."""
-    return render_template('dashboard.html', name=name, location=location)
+    return render_template("dashboard.html", name=name, location=location)
 
 
-@app.route('/item_input/<name>/<location>', defaults={'mode': None}, methods=['GET', 'POST'])
-@app.route('/item_input/<name>/<location>/<mode>', methods=['GET', 'POST'])
+@app.route(
+    "/item_input/<name>/<location>", defaults={"mode": None}, methods=["GET", "POST"]
+)
+@app.route("/item_input/<name>/<location>/<mode>", methods=["GET", "POST"])
 def item_input(name: str, location: str, mode: str):
     """Render an item intake form or process a submitted item.
 
@@ -91,32 +105,41 @@ def item_input(name: str, location: str, mode: str):
     Response
         Flask response object for the rendered template or redirect.
     """
-    if request.method == 'POST':
-        category = request.form.get('category')
-        subcategory = request.form.get('subcategory')
-        condition = request.form.get('condition')
-        dirty = request.form.get('dirty')
+    if request.method == "POST":
+        category = request.form.get("category")
+        subcategory = request.form.get("subcategory")
+        condition = request.form.get("condition")
+        dirty = request.form.get("dirty")
 
-        photo = request.files.get('photo')
+        photo = request.files.get("photo")
         photo_filename = None
         if photo:
-            photo_filename = os.path.join(app.config['UPLOAD_FOLDER'], photo.filename)
+            photo_filename = os.path.join(app.config["UPLOAD_FOLDER"], photo.filename)
             photo.save(photo_filename)
 
-        items.append({
-            'name': name,
-            'location': location,
-            'category': category,
-            'subcategory': subcategory,
-            'condition': condition,
-            'dirty': dirty,
-            'photo': photo_filename
-        })
+        items.append(
+            {
+                "name": name,
+                "location": location,
+                "category": category,
+                "subcategory": subcategory,
+                "condition": condition,
+                "dirty": dirty,
+                "photo": photo_filename,
+            }
+        )
         item_index = len(items) - 1
 
-        if mode == 'track':
-            return redirect(url_for('track_and_monitor', name=name, location=location, item_index=item_index))
-        return redirect(url_for('disposal_options', name=name, location=location))
+        if mode == "track":
+            return redirect(
+                url_for(
+                    "track_and_monitor",
+                    name=name,
+                    location=location,
+                    item_index=item_index,
+                )
+            )
+        return redirect(url_for("disposal_options", name=name, location=location))
 
     categories = {
         "Plastics": ["PET", "PE", "PS", "PVC", "PP", "Plastic Films"],
@@ -124,10 +147,12 @@ def item_input(name: str, location: str, mode: str):
         "Textiles": ["H&M"],
     }
 
-    return render_template('item_input.html', name=name, location=location, categories=categories)
+    return render_template(
+        "item_input.html", name=name, location=location, categories=categories
+    )
 
 
-@app.route('/disposal_options/<location>')
+@app.route("/disposal_options/<location>")
 def disposal_options(location: str):
     """Render disposal options for a specific location.
 
@@ -142,73 +167,102 @@ def disposal_options(location: str):
         Rendered disposal options page.
     """
     berlin_buyers = ["BSR", "ALBA"] + [f"Buyer {i}" for i in range(1, 11)]
-    athens_buyers = [f"Municipality {i}" for i in range(1, 11)] + [f"Buyer {i}" for i in range(1, 11)]
+    athens_buyers = [f"Municipality {i}" for i in range(1, 11)] + [
+        f"Buyer {i}" for i in range(1, 11)
+    ]
 
     buyers = berlin_buyers if location == "Berlin" else athens_buyers
     buyer_data = []
     for buyer in buyers:
-        buyer_data.append({
-            "name": buyer,
-            "lat": random.uniform(52.3, 52.6) if location == "Berlin" else random.uniform(37.9, 38.1),
-            "lon": random.uniform(13.2, 13.6) if location == "Berlin" else random.uniform(23.6, 23.9),
-            "price": round(random.uniform(5.0, 50.0), 2),
-            "carbon": round(random.uniform(1.0, 20.0), 2),
-        })
+        buyer_data.append(
+            {
+                "name": buyer,
+                "lat": (
+                    random.uniform(52.3, 52.6)
+                    if location == "Berlin"
+                    else random.uniform(37.9, 38.1)
+                ),
+                "lon": (
+                    random.uniform(13.2, 13.6)
+                    if location == "Berlin"
+                    else random.uniform(23.6, 23.9)
+                ),
+                "price": round(random.uniform(5.0, 50.0), 2),
+                "carbon": round(random.uniform(1.0, 20.0), 2),
+            }
+        )
     buyer_positions = {
         buyer: {
-            "lat": round(random.uniform(52.3, 52.6), 4) if location == "Berlin" else round(random.uniform(37.9, 38.1), 4),
-            "lon": round(random.uniform(13.2, 13.6), 4) if location == "Berlin" else round(random.uniform(23.6, 23.9), 4),
+            "lat": (
+                round(random.uniform(52.3, 52.6), 4)
+                if location == "Berlin"
+                else round(random.uniform(37.9, 38.1), 4)
+            ),
+            "lon": (
+                round(random.uniform(13.2, 13.6), 4)
+                if location == "Berlin"
+                else round(random.uniform(23.6, 23.9), 4)
+            ),
             "price": round(random.uniform(5.0, 50.0), 2),
             "carbon": round(random.uniform(1.0, 20.0), 2),
         }
         for buyer in buyers
     }
 
-    return render_template('disposal_options.html', location=location, buyers=buyer_data, buyer_positions=buyer_positions)
+    return render_template(
+        "disposal_options.html",
+        location=location,
+        buyers=buyer_data,
+        buyer_positions=buyer_positions,
+    )
 
 
-@app.route('/track_and_monitor/<location>/<int:item_index>')
-def track_and_monitor(location: str, item_index: int):
+@app.route("/track_and_monitor/<location>")
+def track_and_monitor(location: str):
     """Render the tracking and monitoring page for a selected item.
 
     Parameters
     ----------
     location : str
         The location context for monitoring.
-    item_index : int
-        Index of the tracked item in memory.
 
     Returns
     -------
     flask.Response
         Rendered tracking page with dashboard visibility.
     """
-    item = items[item_index]
     dash_url = f"/analytics/?location={location}"
-    print(f"Serving monitoring dashboard for item {item} at location {location}")
-    show_dashboard = item.get('category', '').lower() == 'textiles'
     return render_template(
-        'track_and_monitor.html', 
-        location=location, 
-        item=item, 
-        show_dashboard=show_dashboard, 
-        dash_url=dash_url
+        "track_and_monitor.html", location=location, dash_url=dash_url
     )
 
 
-@app.route('/reuse_waste')
-def reuse_waste():
-    """Render the reuse waste guidance page."""
-    return render_template('reuse_waste.html')
+@app.route("/reuse_waste")
+def reuse_waste() -> Response:
+    """Render the reuse waste guidance page.
+
+    Returns
+    -------
+    Response
+        The rendered reuse waste template.
+    """
+    return render_template("reuse_waste.html")
 
 
-@app.route('/reduce_waste')
-def reduce_waste():
-    """Render the reduce waste page with external results."""
+@app.route("/reduce_waste")
+def reduce_waste() -> Response:
+    """Render the reduce waste page with external results.
+
+    Returns
+    -------
+    Response
+        The rendered reduce waste template with scraped results.
+    """
     results = scrape_reduce_waste()
-    return render_template('reduce_waste.html', results=results)
+    return render_template("reduce_waste.html", results=results)
 
-def is_allowed(url: str, user_agent='*'):
+
+def is_allowed(url: str, user_agent="*"):
     """Check robots.txt to verify whether crawling is permitted.
 
     Parameters
@@ -224,13 +278,14 @@ def is_allowed(url: str, user_agent='*'):
         True if the URL is allowed, otherwise False.
     """
     parsed_url = urlparse(url)
-    base_url = f'{parsed_url.scheme}://{parsed_url.netloc}'
-    robots_url = urljoin(base_url, 'robots.txt')
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    robots_url = urljoin(base_url, "robots.txt")
 
     rp = RobotFileParser()
     rp.set_url(robots_url)
     rp.read()
     return rp.can_fetch(user_agent, url)
+
 
 def scrape_reduce_waste() -> list[dict[str, str]] | None:
     """Fetch waste reduction content from an external web source when allowed.
@@ -241,9 +296,9 @@ def scrape_reduce_waste() -> list[dict[str, str]] | None:
         A list of result items with title, summary, and link fields.
     """
     url = "https://onetreeplanted.org"
-    headers = {'User-Agent': '*'}
+    headers = {"User-Agent": "*"}
 
-    if is_allowed(url, 'YourBotName'):
+    if is_allowed(url, "YourBotName"):
         try:
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
@@ -251,28 +306,28 @@ def scrape_reduce_waste() -> list[dict[str, str]] | None:
             print("Error fetching data:", e)
             return []
 
-        soup = BeautifulSoup(response.content, 'html.parser')
+        soup = BeautifulSoup(response.content, "html.parser")
         results = []
 
-        articles = soup.find_all('article')
+        articles = soup.find_all("article")
         for article in articles:
-            title_tag = article.find('h2')
-            summary_tag = article.find('p')
-            link_tag = article.find('a')
+            title_tag = article.find("h2")
+            summary_tag = article.find("p")
+            link_tag = article.find("a")
             if title_tag and summary_tag and link_tag:
                 title = title_tag.get_text(strip=True)
                 summary = summary_tag.get_text(strip=True)
-                link = link_tag.get('href')
-                results.append({'title': title, 'summary': summary, 'link': link})
+                link = link_tag.get("href")
+                results.append({"title": title, "summary": summary, "link": link})
 
         return results
     print("Access to this URL is disallowed by robots.txt")
 
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
     # Listen on 0.0.0.0 so external requests reach you
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
     # app.run(debug=True)
 
 # Save index.html file

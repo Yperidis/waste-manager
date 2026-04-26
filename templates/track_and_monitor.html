@@ -3,45 +3,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Track and Monitor Disposed Items - {{ location }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Waste Managers - {{ location }}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #333; }
-        .manager { border-bottom: 1px solid #ddd; padding: 15px 0; }
-        .manager:last-child { border-bottom: none; }
-        .kpi { margin-top: 10px; font-size: 0.95em; color: #555; }
-        .score { font-weight: bold; color: #2e7d32; }
-        .fail { color: #c62828; }
+        .dash-container { margin-top: 20px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Central Waste Managers in {{ location }}</h1>
-        {% if show_dashboard %}
-            <p style="text-align:center; color: #666;">Here are the latest indicators from local authorities and central operators</p>
-            <iframe src="{{ dash_url }}" style="width:100%; height:600px; border:none;"></iframe>
-        {% else %}
-            <p style="text-align:center; color:#888;">No analytics dashboard available for this item type ({{ item.category }}).</p>
-        {% endif %}
-
-        {% for manager in managers %}
-        <div class="manager">
-            <h2>{{ manager.name }}</h2>
-            <div class="kpi">Transparency Score: <span class="score">{{ manager.transparency }}</span></div>
-            <div class="kpi">Cost per Tonne: <span class="score">€{{ manager.cost_per_tonne }}</span></div>
-            <div class="kpi">Service Coverage: <span class="score">{{ manager.coverage }}%</span></div>
-            <div class="kpi">Reported Incidents: 
-                {% if manager.incidents == 0 %}
-                    <span class="score">None</span>
-                {% else %}
-                    <span class="fail">{{ manager.incidents }}</span>
-                {% endif %}
-            </div>
+        <p style="text-align:center; color: #666;">
+            Select a waste category below to view real-time transparency and processing metrics.
+        </p>
+        
+        <div class="dash-container">
+            <iframe src="{{ dash_url }}" style="width:100%; height:800px; border:none;"></iframe>
         </div>
-        {% endfor %}
     </div>
 </body>
 </html>
-
